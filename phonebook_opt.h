@@ -5,7 +5,8 @@
 
 /* TODO: After modifying the original version, uncomment the following
  * line to set OPT properly */
-// #define OPT 1
+#define OPT 1
+
 typedef struct __PHONE_BOOK_ENTRY {
     char lastName[MAX_LAST_NAME_SIZE];
     char firstName[16];
@@ -17,10 +18,19 @@ typedef struct __PHONE_BOOK_ENTRY {
     char city[16];
     char state[2];
     char zip[5];
-    struct __PHONE_BOOK_ENTRY *pNext;
+    int height;
+    struct __PHONE_BOOK_ENTRY *right;
+    struct __PHONE_BOOK_ENTRY *left;
 } entry;
 
 entry *findName(char lastName[], entry *pHead);
-entry *append(char lastName[], entry *e);
+entry *append(char lastName[], entry *node);
+entry *newNode(char lastName[]);
+entry *rightRotate(entry *y);
+entry *leftRotate(entry *x);
+int getBalance(entry *N);
+int height(entry *N);
+int max(int a, int b);
+void preOrder(entry *root);
 
 #endif
