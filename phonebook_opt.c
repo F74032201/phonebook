@@ -5,7 +5,7 @@
 
 #include "phonebook_opt.h"
 
-entry *findName(char lastName[], entry *pHead)
+bst_entry *findName(char lastName[], bst_entry *pHead)
 {
     while (pHead != NULL) {
         if (strcasecmp(lastName, pHead->lastName) == 0)
@@ -18,131 +18,78 @@ entry *findName(char lastName[], entry *pHead)
     return NULL;
 }
 
-/* Helper function that allocates a new node with the given lastName and
-    NULL left and right pointers. */
-entry* newNode(char lastName[])
+
+entry *append(char lastName[], entry *e)
 {
-    entry *node = (entry*)malloc(sizeof(entry));
+    /* allocate memory for the new entry and put lastName */
+    e->pNext = (entry *) malloc(sizeof(entry));
+    e = e->pNext;
+    strcpy(e->lastName, lastName);
+    e->pNext = NULL;
+
+    return e;
+}
+
+/* sortedListToBSTRecur() to construct BST */
+bst_entry* sortedListToBST(entry *head)
+{
+    /*Count the number of nodes in Linked List */
+    int n = countLNodes(head);
+
+    /* Construct BST */
+    return sortedListToBSTRecur(&head, n);
+}
+
+/* The main function that constructs balanced BST and returns root of it.
+       head_ref -->  Pointer to pointer to head node of linked list
+       n  --> No. of nodes in Linked List */
+bst_entry* sortedListToBSTRecur(entry **head_ref, int n)
+{
+    /* Base Case */
+    if (n <= 0)
+        return NULL;
+
+    /* Recursively construct the left subtree */
+    bst_entry *left = sortedListToBSTRecur(head_ref, n/2);
+
+    /* Allocate memory for root, and link the above constructed left
+       subtree with root */
+    bst_entry *root = newNode((*head_ref)->lastName);
+    root->left = left;
+
+    /* Change head pointer of Linked List for parent recursive calls */
+    *head_ref = (*head_ref)->pNext;
+
+    /* Recursively construct the right subtree and link it with root
+      The number of nodes in right subtree  is total nodes - nodes in
+      left subtree - 1 (for root) which is n-n/2-1*/
+    root->right = sortedListToBSTRecur(head_ref, n-n/2-1);
+
+    return root;
+}
+
+/* A utility function that returns count of nodes in a given Linked List */
+int countLNodes(entry *head)
+{
+    int count = 0;
+    entry *temp = head;
+    while(temp) {
+        temp = temp->pNext;
+        count++;
+    }
+    return count;
+}
+
+
+/* Helper function that allocates a new node with the
+   given lastName and NULL left and right pointers. */
+bst_entry* newNode(char lastName[])
+{
+    bst_entry* node = (bst_entry*)
+                      malloc(sizeof(bst_entry));
     strcpy(node->lastName, lastName);
-    node->left   = NULL;
-    node->right  = NULL;
-    node->height = 1;  // new node is initially added at leaf
-    return(node);
-}
+    node->left = NULL;
+    node->right = NULL;
 
-// A utility function to get height of the tree
-int height(entry *N)
-{
-    if (N == NULL)
-        return 0;
-    return N->height;
-}
-
-entry *append(char lastName[], entry *node)
-{
-    /* 1.  Perform the normal BST appendion */
-    if (node == NULL)
-        return(newNode(lastName));
-
-    if (strcasecmp(lastName, node->lastName) < 0)
-        node->left  = append(lastName, node->left);
-    else if (strcasecmp(lastName, node->lastName) > 0)
-        node->right = append(lastName, node->right);
-    else // Equal lastNames are not allowed in BST
-        return node;
-
-    /* 2. Update height of this ancestor node */
-    node->height = 1 + max(height(node->left),
-                           height(node->right));
-
-    /* 3. Get the balance factor of this ancestor
-          node to check whether this node became
-          unbalanced */
-    int balance = getBalance(node);
-
-    // If this node becomes unbalanced, then
-    // there are 4 cases
-
-    // Left Left Case
-    if (balance > 1 && strcasecmp(lastName, node->left->lastName) < 0)
-        return rightRotate(node);
-
-    // Right Right Case
-    if (balance < -1 && strcasecmp(lastName, node->right->lastName) > 0)
-        return leftRotate(node);
-
-    // Left Right Case
-    if (balance > 1 && strcasecmp(lastName, node->left->lastName) > 0) {
-        node->left =  leftRotate(node->left);
-        return rightRotate(node);
-    }
-
-    // Right Left Case
-    if (balance < -1 && strcasecmp(lastName, node->right->lastName) < 0) {
-        node->right = rightRotate(node->right);
-        return leftRotate(node);
-    }
-
-    /* return the (unchanged) node pointer */
     return node;
 }
-
-void preOrder(entry *root)
-{
-    if(root != NULL) {
-        printf("%s ", root->lastName);
-        preOrder(root->left);
-        preOrder(root->right);
-    }
-}
-
-// A utility function to right rotate subtree rooted with y
-entry *rightRotate(entry *y)
-{
-    entry *x = y->left;
-    entry *T2 = x->right;
-
-    // Perform rotation
-    x->right = y;
-    y->left = T2;
-
-    // Update heights
-    y->height = max(height(y->left), height(y->right))+1;
-    x->height = max(height(x->left), height(x->right))+1;
-
-    // Return new root
-    return x;
-}
-
-// A utility function to left rotate subtree rooted with x
-entry *leftRotate(entry *x)
-{
-    entry *y = x->right;
-    entry *T2 = y->left;
-
-    // Perform rotation
-    y->left = x;
-    x->right = T2;
-
-    //  Update heights
-    x->height = max(height(x->left), height(x->right))+1;
-    y->height = max(height(y->left), height(y->right))+1;
-
-    // Return new root
-    return y;
-}
-
-// Get Balance factor of node N
-int getBalance(entry *N)
-{
-    if (N == NULL)
-        return 0;
-    return height(N->left) - height(N->right);
-}
-
-// A utility function to get maximum of two integers
-int max(int a, int b)
-{
-    return (a > b)? a : b;
-}
-
